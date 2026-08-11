@@ -55,11 +55,16 @@ References:
 
 ## Step 2: Build The Simulated Web Demo
 
-Status: Not started
+Status: Completed on 2026-08-04
+
+Branch:
+
+- Base branch: main
+- Step branch: step-02-simulated-web-demo
 
 Work:
 
-- Create a Moovit-like rider screen focused on map, route, stops, bus movement, and request controls.
+- Create a Moovit-like rider screen focused on map, route, stops, bus movement, and request controls. Done.
 - Use simulated data for:
   - route shape,
   - stop list,
@@ -67,16 +72,31 @@ Work:
   - ETA,
   - pickup request state,
   - drop-off request state.
-- Add a driver-device simulation panel with two lights:
+- Add a driver-device simulation panel with two lights. Done:
   - pickup request,
   - drop-off request.
-- Show clear state changes:
+- Show clear state changes. Done:
   - no request,
   - request pending,
   - driver received,
   - bus arriving,
   - request completed,
   - bus passed.
+
+Implementation notes:
+
+- Added a static web demo that opens directly from `index.html`.
+- Added a simulated line 117 route segment from Central Station to Maccabim Reut Junction.
+- Added a moving bus marker, route progress, ETA, next-stop state, stop timeline, pickup request, drop-off request, reset control, and driver-device light simulation.
+- Corrected driver-device behavior so pickup and drop-off lights turn on only when the bus's next stop is the requested stop; earlier received requests stay queued without lighting the driver signal.
+- The demo uses local simulated data only and does not require internet, API keys, package installation, or a backend.
+
+Validation:
+
+- `node --check app.js` passed.
+- After correcting the driver-light logic, `node --check app.js` passed again.
+- `git status --short --branch` showed the active branch as `step-02-simulated-web-demo` with only the intended Step 2 files changed.
+- `git diff --stat` showed only the tracked `PLAN.md` update; the new app files are untracked until staged.
 
 ## Step 3: Add Real Transit Data
 
