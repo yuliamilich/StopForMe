@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StopForMe Demo</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="rider-app" aria-label="Rider demo">
+        <header class="top-bar">
+          <div>
+            <p class="eyebrow">StopForMe pilot</p>
+            <h1>Line 117 to Jerusalem</h1>
+          </div>
+          <div class="service-badge" aria-label="Simulated service status">
+            <span class="service-dot"></span>
+            Simulated live
+          </div>
+        </header>
+
+        <section class="trip-card" aria-label="Selected trip">
+          <div class="field">
+            <span class="field-label">Pickup</span>
+            <strong id="pickupStop">City Hall</strong>
+          </div>
+          <div class="connector" aria-hidden="true"></div>
+          <div class="field">
+            <span class="field-label">Drop-off</span>
+            <strong id="dropoffStop">Maccabim Reut Junction</strong>
+          </div>
+        </section>
+
+        <section class="map-panel" aria-label="Live route map">
+          <div class="map-grid" aria-hidden="true"></div>
+          <svg class="route-map" viewBox="0 0 900 520" role="img" aria-labelledby="mapTitle mapDesc">
+            <title id="mapTitle">Simulated line 117 route map</title>
+            <desc id="mapDesc">A bus moves from Modi'in-Maccabim-Reut Central Station through City Hall, Dam HaMaccabim, Modi'in East Junction, and Maccabim Reut Junction.</desc>
+            <path class="district district-a" d="M75 105 C180 35 325 46 396 116 C476 194 600 155 724 84 C798 43 858 82 869 158 L870 463 L64 462 L52 220 C51 169 48 132 75 105Z"></path>
+            <path class="district district-b" d="M93 348 C174 265 275 244 368 290 C462 337 566 291 651 230 C720 180 810 205 842 278 L868 461 L61 462 C56 421 62 380 93 348Z"></path>
+            <path class="street street-light" d="M106 145 C230 132 306 172 382 222 C461 273 542 266 648 211 C728 170 802 174 852 223"></path>
+            <path class="street street-light" d="M98 384 C201 346 285 338 367 370 C464 409 556 386 650 325 C733 270 793 282 848 328"></path>
+            <path class="street" d="M140 80 L170 447"></path>
+            <path class="street" d="M315 61 L347 462"></path>
+            <path class="street" d="M510 73 L536 458"></path>
+            <path class="street" d="M703 70 L735 461"></path>
+            <path id="routePath" class="route-line" d="M120 380 C210 286 284 262 354 300 C432 342 480 286 515 228 C553 165 620 151 690 183 C755 213 800 174 824 110"></path>
+            <path id="routeProgress" class="route-progress" d="M120 380 C210 286 284 262 354 300 C432 342 480 286 515 228 C553 165 620 151 690 183 C755 213 800 174 824 110"></path>
+            <g id="stopLayer"></g>
+            <g id="busMarker" class="bus-marker" aria-label="Simulated bus">
+              <circle r="19"></circle>
+              <path d="M-9 -6 H9 C12 -6 14 -4 14 -1 V9 H10 V13 H5 V9 H-5 V13 H-10 V9 H-14 V-1 C-14 -4 -12 -6 -9 -6Z"></path>
+              <circle class="wheel" cx="-7" cy="9" r="2.4"></circle>
+              <circle class="wheel" cx="7" cy="9" r="2.4"></circle>
+            </g>
+          </svg>
+        </section>
+
+        <section class="status-strip" aria-label="Trip status">
+          <div>
+            <span class="metric-label">Next stop</span>
+            <strong id="nextStop">Central Station</strong>
+          </div>
+          <div>
+            <span class="metric-label">ETA</span>
+            <strong id="eta">--</strong>
+          </div>
+          <div>
+            <span class="metric-label">Bus</span>
+            <strong id="busState">Approaching</strong>
+          </div>
+        </section>
+
+        <section class="controls" aria-label="Request controls">
+          <button class="primary-action" id="pickupButton" type="button">
+            Request pickup
+          </button>
+          <button class="secondary-action" id="dropoffButton" type="button">
+            Request drop-off
+          </button>
+          <button class="icon-action" id="resetButton" type="button" aria-label="Reset simulation" title="Reset simulation">
+            Reset
+          </button>
+        </section>
+      </section>
+
+      <aside class="driver-panel" aria-label="Driver device simulation">
+        <div class="device">
+          <div class="device-header">
+            <span class="device-title">Driver device</span>
+            <span id="deviceConnection" class="device-pill">Online</span>
+          </div>
+          <div class="device-screen">
+            <span class="small-label">Assigned route</span>
+            <strong>117</strong>
+            <span id="deviceMessage">No active stop request</span>
+          </div>
+          <div class="lights">
+            <div class="light-row">
+              <span id="pickupLight" class="light"></span>
+              <div>
+                <strong>Pickup</strong>
+                <span id="pickupStatus">No request</span>
+              </div>
+            </div>
+            <div class="light-row">
+              <span id="dropoffLight" class="light"></span>
+              <div>
+                <strong>Drop-off</strong>
+                <span id="dropoffStatus">No request</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="timeline" aria-label="Stop timeline">
+          <h2>Stop timeline</h2>
+          <ol id="stopTimeline"></ol>
+        </section>
+      </aside>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
