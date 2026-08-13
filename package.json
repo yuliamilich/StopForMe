@@ -1,0 +1,10 @@
+{
+  "name": "stop-for-me",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check app.js && node --check scripts/import-gtfs.mjs",
+    "import:gtfs": "node scripts/import-gtfs.mjs --input data/raw/gtfs --out data/line-117.js"
+  }
+}

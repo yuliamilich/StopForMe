@@ -12,11 +12,11 @@
         <header class="top-bar">
           <div>
             <p class="eyebrow">StopForMe pilot</p>
-            <h1>Line 117 to Jerusalem</h1>
+            <h1 id="routeTitle">Line 117 to Jerusalem</h1>
           </div>
           <div class="service-badge" aria-label="Simulated service status">
             <span class="service-dot"></span>
-            Simulated live
+            <span id="serviceMode">GTFS-backed demo</span>
           </div>
         </header>
 
@@ -36,7 +36,7 @@
           <div class="map-grid" aria-hidden="true"></div>
           <svg class="route-map" viewBox="0 0 900 520" role="img" aria-labelledby="mapTitle mapDesc">
             <title id="mapTitle">Simulated line 117 route map</title>
-            <desc id="mapDesc">A bus moves from Modi'in-Maccabim-Reut Central Station through City Hall, Dam HaMaccabim, Modi'in East Junction, and Maccabim Reut Junction.</desc>
+            <desc id="mapDesc">A bus moves along the GTFS-backed line 117 route from Modi'in-Maccabim-Reut toward Jerusalem.</desc>
             <path class="district district-a" d="M75 105 C180 35 325 46 396 116 C476 194 600 155 724 84 C798 43 858 82 869 158 L870 463 L64 462 L52 220 C51 169 48 132 75 105Z"></path>
             <path class="district district-b" d="M93 348 C174 265 275 244 368 290 C462 337 566 291 651 230 C720 180 810 205 842 278 L868 461 L61 462 C56 421 62 380 93 348Z"></path>
             <path class="street street-light" d="M106 145 C230 132 306 172 382 222 C461 273 542 266 648 211 C728 170 802 174 852 223"></path>
@@ -121,6 +121,7 @@
       </aside>
     </main>
 
+    <script src="data/line-117.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

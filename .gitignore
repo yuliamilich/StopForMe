@@ -1,0 +1,6 @@
+# Local transit feeds can be large and should be regenerated from source.
+data/raw/
+data/generated/
+
+# Runtime dependencies, if installed later.
+node_modules/
