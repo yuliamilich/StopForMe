@@ -100,15 +100,46 @@ Validation:
 
 ## Step 3: Add Real Transit Data
 
-Status: Not started
+Status: Completed on 2026-08-11
+
+Branch:
+
+- Base branch: main
+- Step branch: step-03-real-transit-data
 
 Work:
 
-- Start with public GTFS data for the selected city where available.
-- Parse GTFS stops, routes, trips, stop times, and shapes.
-- Add GTFS Realtime if the agency provides vehicle positions or trip updates.
-- Evaluate Moovit or Google transit APIs if access, pricing, and licensing are practical.
-- Keep simulated fallback data so the demo still works without external API access.
+- Start with public GTFS data for the selected city where available. Done: used Israel Ministry of Transport GTFS from https://gtfs.mot.gov.il/gtfsfiles/.
+- Parse GTFS stops, routes, trips, stop times, and shapes. Done: generated `data/line-117.js` from the extracted MOT feed.
+- Add GTFS Realtime if the agency provides vehicle positions or trip updates. Deferred to a later step; Step 3 stays static-data focused.
+- Evaluate Moovit or Google transit APIs if access, pricing, and licensing are practical. Deferred to later evaluation; Step 3 uses public static GTFS-backed data first.
+- Keep simulated fallback data so the demo still works without external API access. Done in code.
+
+Implementation notes:
+
+- Added `data/line-117.js` as the browser-loaded route data source for Kavim line 117 from Modi'in-Maccabim-Reut to Jerusalem.
+- Added `scripts/import-gtfs.mjs`, a no-dependency Node.js importer that can read extracted GTFS files and regenerate `data/line-117.js`.
+- Added `package.json` commands for syntax checks and GTFS import.
+- Updated `index.html` to load route data before `app.js`.
+- Updated `app.js` so route metadata, stops, map path, request targets, and ETA duration come from route data when available, with the previous simulated data kept as fallback.
+- Added `.gitignore` entries for raw/generated GTFS data and dependencies.
+- Selected the correct duplicate route number by preferring route names, headsigns, origins, and destinations that match Modi'in and Jerusalem.
+- Generated route data contains 10 stops, agency Kavim, duration 39 minutes, pickup target City Hall, and drop-off target Maccabim Reut Junction.
+- Fixed stop/map synchronization by calculating each stop's simulation progress from its nearest position along the GTFS route shape instead of evenly spacing stops by sequence.
+- Slowed demo pacing before the requested drop-off stop by mapping the first half of simulation time to the route segment ending at that stop.
+- The current background is still a stylized SVG map placeholder; a real street map layer is intentionally deferred to a future frontend/map step.
+
+Validation:
+
+- `npm run check` passed; npm also printed a non-fatal cache-log permission warning.
+- `node --check data/line-117.js` passed.
+- A route-data shape check passed: route 117, agency Kavim, 10 stops, pickup target City Hall, and drop-off target Maccabim Reut Junction.
+- The importer was tested against a temporary GTFS fixture and wrote a valid route file.
+- The importer was run against the downloaded/extracted Israel Ministry of Transport GTFS feed and generated `data/line-117.js`.
+- A shape-aligned progress check passed: all stop progress values increase monotonically along the route shape.
+- A pacing check passed: simulation start maps to progress 0, the midpoint maps to the requested drop-off stop, and the end maps to route progress 1.
+- Current project state: Step 3 app remains static and works without a backend; realtime data is still not connected.
+- Next unfinished step: Step 4, add request management backend.
 
 ## Step 4: Add Request Management Backend
 

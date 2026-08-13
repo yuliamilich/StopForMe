@@ -1,50 +1,61 @@
-const stops = [
-  {
-    id: "central",
-    name: "Modi'in-Maccabim-Reut Central Station",
-    shortName: "Central Station",
-    x: 120,
-    y: 380,
-    progress: 0,
+const fallbackRouteData = {
+  route: {
+    shortName: "117",
+    directionName: "Line 117 to Jerusalem",
+    durationMinutes: 38,
   },
-  {
-    id: "city-hall",
-    name: "City Hall",
-    shortName: "City Hall",
-    x: 260,
-    y: 282,
-    progress: 0.24,
+  mapPath: "M120 380 C210 286 284 262 354 300 C432 342 480 286 515 228 C553 165 620 151 690 183 C755 213 800 174 824 110",
+  requestTargets: {
+    pickup: "city-hall",
+    dropoff: "maccabim-reut",
   },
-  {
-    id: "dam-hamaccabim",
-    name: "Dam HaMaccabim/Hashmonaim Boulevard",
-    shortName: "Dam HaMaccabim",
-    x: 420,
-    y: 330,
-    progress: 0.45,
-  },
-  {
-    id: "modiin-east",
-    name: "Modi'in East Junction",
-    shortName: "Modi'in East",
-    x: 560,
-    y: 170,
-    progress: 0.68,
-  },
-  {
-    id: "maccabim-reut",
-    name: "Maccabim Reut Junction",
-    shortName: "Maccabim Reut",
-    x: 824,
-    y: 110,
-    progress: 1,
-  },
-];
-
-const requestTargets = {
-  pickup: "city-hall",
-  dropoff: "maccabim-reut",
+  stops: [
+    {
+      id: "central",
+      name: "Modi'in-Maccabim-Reut Central Station",
+      shortName: "Central Station",
+      x: 120,
+      y: 380,
+      progress: 0,
+    },
+    {
+      id: "city-hall",
+      name: "City Hall",
+      shortName: "City Hall",
+      x: 260,
+      y: 282,
+      progress: 0.24,
+    },
+    {
+      id: "dam-hamaccabim",
+      name: "Dam HaMaccabim/Hashmonaim Boulevard",
+      shortName: "Dam HaMaccabim",
+      x: 420,
+      y: 330,
+      progress: 0.45,
+    },
+    {
+      id: "modiin-east",
+      name: "Modi'in East Junction",
+      shortName: "Modi'in East",
+      x: 560,
+      y: 170,
+      progress: 0.68,
+    },
+    {
+      id: "maccabim-reut",
+      name: "Maccabim Reut Junction",
+      shortName: "Maccabim Reut",
+      x: 824,
+      y: 110,
+      progress: 1,
+    },
+  ],
 };
+
+const routeData = window.STOP_FOR_ME_ROUTE || fallbackRouteData;
+const stops = routeData.stops;
+const requestTargets = routeData.requestTargets;
 
 const requestLabels = {
   none: "No request",
@@ -55,6 +66,7 @@ const requestLabels = {
 };
 
 const simulationDurationMs = 52000;
+const dropoffSegmentTimeShare = 0.5;
 const tickMs = 160;
 const acknowledgementDelayMs = 1400;
 let startedAt = Date.now();
@@ -69,6 +81,10 @@ const state = {
 };
 
 const elements = {
+  routeTitle: document.querySelector("#routeTitle"),
+  serviceMode: document.querySelector("#serviceMode"),
+  pickupStop: document.querySelector("#pickupStop"),
+  dropoffStop: document.querySelector("#dropoffStop"),
   busMarker: document.querySelector("#busMarker"),
   routePath: document.querySelector("#routePath"),
   routeProgress: document.querySelector("#routeProgress"),
@@ -87,6 +103,13 @@ const elements = {
   deviceMessage: document.querySelector("#deviceMessage"),
 };
 
+elements.routeTitle.textContent = `Line ${routeData.route.shortName} to ${routeData.route.destinationName || "Jerusalem"}`;
+elements.serviceMode.textContent = routeData.source ? "GTFS-backed demo" : "Simulated live";
+elements.pickupStop.textContent = getStopById(requestTargets.pickup).shortName;
+elements.dropoffStop.textContent = getStopById(requestTargets.dropoff).shortName;
+elements.routePath.setAttribute("d", routeData.mapPath);
+elements.routeProgress.setAttribute("d", routeData.mapPath);
+
 const routeLength = elements.routePath.getTotalLength();
 elements.routeProgress.style.strokeDasharray = routeLength;
 
@@ -102,10 +125,27 @@ function getStopById(stopId) {
   return stops.find((stop) => stop.id === stopId);
 }
 
+function getDropoffStopProgress() {
+  return getStopById(requestTargets.dropoff)?.progress || 0.5;
+}
+
+function getRouteProgressForElapsedTime(elapsedMs) {
+  const timeProgress = Math.min(1, elapsedMs / simulationDurationMs);
+  const dropoffProgress = getDropoffStopProgress();
+
+  if (timeProgress <= dropoffSegmentTimeShare) {
+    return (timeProgress / dropoffSegmentTimeShare) * dropoffProgress;
+  }
+
+  const remainingTimeProgress = (timeProgress - dropoffSegmentTimeShare) / (1 - dropoffSegmentTimeShare);
+  return dropoffProgress + remainingTimeProgress * (1 - dropoffProgress);
+}
+
 function getEtaLabel(stop) {
   const remainingProgress = Math.max(0, stop.progress - state.progress);
   const remainingMs = remainingProgress * simulationDurationMs;
-  const minutes = Math.max(1, Math.ceil(remainingMs / 1000 / 8));
+  const durationMinutes = routeData.route.durationMinutes || 38;
+  const minutes = Math.max(1, Math.ceil((remainingMs / simulationDurationMs) * durationMinutes));
   return `${minutes} min`;
 }
 
@@ -155,7 +195,7 @@ function updateRequestState(type) {
 
 function updateBusPosition() {
   const elapsedMs = Date.now() - startedAt;
-  state.progress = Math.min(1, elapsedMs / simulationDurationMs);
+  state.progress = getRouteProgressForElapsedTime(elapsedMs);
 
   updateRequestState("pickup");
   updateRequestState("dropoff");
@@ -245,9 +285,9 @@ function renderDevice() {
   elements.dropoffStatus.textContent = requestLabels[state.dropoff];
 
   if (pickupLightActive) {
-    elements.deviceMessage.textContent = "Pickup request: City Hall";
+    elements.deviceMessage.textContent = `Pickup request: ${getStopById(requestTargets.pickup).shortName}`;
   } else if (dropoffLightActive) {
-    elements.deviceMessage.textContent = "Drop-off request: Maccabim Reut Junction";
+    elements.deviceMessage.textContent = `Drop-off request: ${getStopById(requestTargets.dropoff).shortName}`;
   } else if (state.pickup === "pending" || state.dropoff === "pending") {
     elements.deviceMessage.textContent = "Receiving rider request...";
   } else if (state.pickup === "received") {
