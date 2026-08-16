@@ -69,8 +69,11 @@ const simulationDurationMs = 52000;
 const dropoffSegmentTimeShare = 0.5;
 const tickMs = 160;
 const acknowledgementDelayMs = 1400;
+const busId = "demo-bus-117";
 let startedAt = Date.now();
-let timerId;
+let localTimerId;
+let backendEvents;
+let backendMode = false;
 
 const state = {
   progress: 0,
@@ -78,6 +81,13 @@ const state = {
   dropoff: "none",
   pickupRequestedAt: null,
   dropoffRequestedAt: null,
+  previousStopId: stops[0].id,
+  nextStopId: stops[0].id,
+  eta: "--",
+  busStatus: "Approaching",
+  pickupLightActive: false,
+  dropoffLightActive: false,
+  deviceMessage: "No active stop request",
 };
 
 const elements = {
@@ -100,11 +110,12 @@ const elements = {
   dropoffLight: document.querySelector("#dropoffLight"),
   pickupStatus: document.querySelector("#pickupStatus"),
   dropoffStatus: document.querySelector("#dropoffStatus"),
+  deviceConnection: document.querySelector("#deviceConnection"),
   deviceMessage: document.querySelector("#deviceMessage"),
 };
 
 elements.routeTitle.textContent = `Line ${routeData.route.shortName} to ${routeData.route.destinationName || "Jerusalem"}`;
-elements.serviceMode.textContent = routeData.source ? "GTFS-backed demo" : "Simulated live";
+elements.serviceMode.textContent = "Connecting...";
 elements.pickupStop.textContent = getStopById(requestTargets.pickup).shortName;
 elements.dropoffStop.textContent = getStopById(requestTargets.dropoff).shortName;
 elements.routePath.setAttribute("d", routeData.mapPath);
@@ -143,9 +154,8 @@ function getRouteProgressForElapsedTime(elapsedMs) {
 
 function getEtaLabel(stop) {
   const remainingProgress = Math.max(0, stop.progress - state.progress);
-  const remainingMs = remainingProgress * simulationDurationMs;
   const durationMinutes = routeData.route.durationMinutes || 38;
-  const minutes = Math.max(1, Math.ceil((remainingMs / simulationDurationMs) * durationMinutes));
+  const minutes = Math.max(1, Math.ceil(remainingProgress * durationMinutes));
   return `${minutes} min`;
 }
 
@@ -161,7 +171,77 @@ function isDriverLightActive(type) {
   return state[type] === "received" && isNextStop(requestTargets[type]);
 }
 
-function requestStop(type) {
+function applyServerSnapshot(snapshot) {
+  state.progress = snapshot.bus.progress;
+  state.pickup = snapshot.requests.pickup.status;
+  state.dropoff = snapshot.requests.dropoff.status;
+  state.pickupRequestedAt = snapshot.requests.pickup.requestedAt;
+  state.dropoffRequestedAt = snapshot.requests.dropoff.requestedAt;
+  state.previousStopId = snapshot.bus.previousStopId;
+  state.nextStopId = snapshot.bus.nextStopId;
+  state.eta = snapshot.bus.eta;
+  state.busStatus = snapshot.bus.status;
+  state.pickupLightActive = snapshot.driverDevice.pickupLightActive;
+  state.dropoffLightActive = snapshot.driverDevice.dropoffLightActive;
+  state.deviceMessage = snapshot.driverDevice.message;
+  render();
+}
+
+async function sendServerRequest(path, body = {}) {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Server request failed: ${response.status}`);
+  }
+
+  applyServerSnapshot(await response.json());
+}
+
+async function connectBackend() {
+  if (window.location.protocol === "file:") {
+    startLocalSimulation();
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/state", { cache: "no-store" });
+    if (!response.ok) throw new Error(`State request failed: ${response.status}`);
+
+    backendMode = true;
+    window.clearInterval(localTimerId);
+    applyServerSnapshot(await response.json());
+    elements.serviceMode.textContent = "Backend live";
+    elements.deviceConnection.textContent = "Online";
+
+    backendEvents = new EventSource("/api/events");
+    backendEvents.addEventListener("state", (event) => {
+      applyServerSnapshot(JSON.parse(event.data));
+    });
+    backendEvents.addEventListener("error", () => {
+      elements.serviceMode.textContent = "Server reconnecting";
+      elements.deviceConnection.textContent = "Reconnecting";
+    });
+  } catch {
+    backendMode = false;
+    startLocalSimulation();
+  }
+}
+
+async function requestStop(type) {
+  if (backendMode) {
+    await sendServerRequest("/api/requests", {
+      type,
+      routeId: routeData.route.id,
+      stopId: requestTargets[type],
+      busId,
+    });
+    return;
+  }
+
   const stopId = requestTargets[type];
 
   if (isPastStop(stopId)) {
@@ -175,7 +255,7 @@ function requestStop(type) {
   render();
 }
 
-function updateRequestState(type) {
+function updateLocalRequestState(type) {
   const status = state[type];
 
   if (status === "none" || status === "completed" || status === "passed") {
@@ -193,29 +273,69 @@ function updateRequestState(type) {
   }
 }
 
-function updateBusPosition() {
-  const elapsedMs = Date.now() - startedAt;
-  state.progress = getRouteProgressForElapsedTime(elapsedMs);
+function updateLocalDerivedState() {
+  const upcomingStop = getUpcomingStop();
+  const previousStop = getPreviousStop();
+  state.previousStopId = previousStop.id;
+  state.nextStopId = upcomingStop.id;
+  state.eta = state.progress >= 1 ? "Arrived" : getEtaLabel(upcomingStop);
+  state.busStatus = state.progress >= 1 ? "Route complete" : `Between ${previousStop.shortName} and ${upcomingStop.shortName}`;
+  state.pickupLightActive = isDriverLightActive("pickup");
+  state.dropoffLightActive = isDriverLightActive("dropoff");
 
-  updateRequestState("pickup");
-  updateRequestState("dropoff");
-  render();
-
-  if (state.progress >= 1) {
-    window.clearInterval(timerId);
+  if (state.pickupLightActive) {
+    state.deviceMessage = `Pickup request: ${getStopById(requestTargets.pickup).shortName}`;
+  } else if (state.dropoffLightActive) {
+    state.deviceMessage = `Drop-off request: ${getStopById(requestTargets.dropoff).shortName}`;
+  } else if (state.pickup === "pending" || state.dropoff === "pending") {
+    state.deviceMessage = "Receiving rider request...";
+  } else if (state.pickup === "received") {
+    state.deviceMessage = "Pickup request queued";
+  } else if (state.dropoff === "received") {
+    state.deviceMessage = "Drop-off request queued";
+  } else {
+    state.deviceMessage = "No active stop request";
   }
 }
 
-function resetSimulation() {
-  window.clearInterval(timerId);
+function updateLocalBusPosition() {
+  const elapsedMs = Date.now() - startedAt;
+  state.progress = getRouteProgressForElapsedTime(elapsedMs);
+  updateLocalRequestState("pickup");
+  updateLocalRequestState("dropoff");
+  updateLocalDerivedState();
+  render();
+
+  if (state.progress >= 1) {
+    window.clearInterval(localTimerId);
+  }
+}
+
+function startLocalSimulation() {
+  if (localTimerId) return;
+
+  elements.serviceMode.textContent = routeData.source ? "Local GTFS demo" : "Simulated live";
+  elements.deviceConnection.textContent = "Local";
+  updateLocalDerivedState();
+  localTimerId = window.setInterval(updateLocalBusPosition, tickMs);
+  render();
+}
+
+async function resetSimulation() {
+  if (backendMode) {
+    await sendServerRequest("/api/reset");
+    return;
+  }
+
+  window.clearInterval(localTimerId);
+  localTimerId = null;
   startedAt = Date.now();
   state.progress = 0;
   state.pickup = "none";
   state.dropoff = "none";
   state.pickupRequestedAt = null;
   state.dropoffRequestedAt = null;
-  timerId = window.setInterval(updateBusPosition, tickMs);
-  render();
+  startLocalSimulation();
 }
 
 function renderStops() {
@@ -239,13 +359,11 @@ function renderStops() {
 }
 
 function renderTimeline() {
-  const upcomingStop = getUpcomingStop();
-
   elements.stopTimeline.innerHTML = stops
     .map((stop, index) => {
       const classes = [];
       if (state.progress >= stop.progress) classes.push("done");
-      if (stop.id === upcomingStop.id) classes.push("current");
+      if (stop.id === state.nextStopId) classes.push("current");
 
       let chip = "";
       if (stop.id === requestTargets.pickup) {
@@ -276,27 +394,11 @@ function renderBus() {
 }
 
 function renderDevice() {
-  const pickupLightActive = isDriverLightActive("pickup");
-  const dropoffLightActive = isDriverLightActive("dropoff");
-
-  elements.pickupLight.className = `light ${pickupLightActive ? "active pickup" : ""}`;
-  elements.dropoffLight.className = `light ${dropoffLightActive ? "active dropoff" : ""}`;
+  elements.pickupLight.className = `light ${state.pickupLightActive ? "active pickup" : ""}`;
+  elements.dropoffLight.className = `light ${state.dropoffLightActive ? "active dropoff" : ""}`;
   elements.pickupStatus.textContent = requestLabels[state.pickup];
   elements.dropoffStatus.textContent = requestLabels[state.dropoff];
-
-  if (pickupLightActive) {
-    elements.deviceMessage.textContent = `Pickup request: ${getStopById(requestTargets.pickup).shortName}`;
-  } else if (dropoffLightActive) {
-    elements.deviceMessage.textContent = `Drop-off request: ${getStopById(requestTargets.dropoff).shortName}`;
-  } else if (state.pickup === "pending" || state.dropoff === "pending") {
-    elements.deviceMessage.textContent = "Receiving rider request...";
-  } else if (state.pickup === "received") {
-    elements.deviceMessage.textContent = "Pickup request queued";
-  } else if (state.dropoff === "received") {
-    elements.deviceMessage.textContent = "Drop-off request queued";
-  } else {
-    elements.deviceMessage.textContent = "No active stop request";
-  }
+  elements.deviceMessage.textContent = state.deviceMessage;
 }
 
 function renderControls() {
@@ -305,12 +407,9 @@ function renderControls() {
 }
 
 function renderTripStatus() {
-  const upcomingStop = getUpcomingStop();
-  const previousStop = getPreviousStop();
-  elements.nextStop.textContent = upcomingStop.shortName;
-  elements.eta.textContent = state.progress >= 1 ? "Arrived" : getEtaLabel(upcomingStop);
-  elements.busState.textContent =
-    state.progress >= 1 ? "Route complete" : `Between ${previousStop.shortName} and ${upcomingStop.shortName}`;
+  elements.nextStop.textContent = getStopById(state.nextStopId).shortName;
+  elements.eta.textContent = state.eta;
+  elements.busState.textContent = state.busStatus;
 }
 
 function render() {
@@ -325,6 +424,6 @@ function render() {
 elements.pickupButton.addEventListener("click", () => requestStop("pickup"));
 elements.dropoffButton.addEventListener("click", () => requestStop("dropoff"));
 elements.resetButton.addEventListener("click", resetSimulation);
+window.addEventListener("beforeunload", () => backendEvents?.close());
 
-timerId = window.setInterval(updateBusPosition, tickMs);
-render();
+connectBackend();

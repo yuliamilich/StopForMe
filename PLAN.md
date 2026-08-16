@@ -2,222 +2,187 @@
 
 ## Working Rule
 
-After every completed project step, update this file before moving to the next step.
+Keep this file as the short durable project plan. After each completed project step, update status, validation, current state, and the next unfinished step.
 
-## Summary
+## Project Summary
 
-StopForMe is a demo integration concept for a Moovit-like transit experience. The goal is to let a rider choose a pickup stop and destination stop, request that the bus stop for them, and show both the rider-facing state and the driver-facing hardware signal.
+StopForMe is a Moovit-like demo showing how a rider can request that a bus stop at a selected pickup stop and destination stop. The demo should show rider request state, realistic route/stops, simulated bus movement, and a driver-facing hardware signal.
 
-Default project path:
+Default path:
 
-- Build a simulated web demo first.
-- Add real transit data and APIs after the demo works.
-- Prototype the driver hardware with an ESP32 device.
-- Use the working demo and hardware prototype to pitch a local city or transit agency first, then approach Moovit with evidence.
+- Build the simulated web demo first.
+- Add real transit data before paid or restricted APIs.
+- Move request/bus state into a backend.
+- Prototype the driver device with ESP32 hardware.
+- Use the working demo and prototype to pitch a local city or transit agency before approaching Moovit.
 
-## Step 1: Define The Pilot Story
+## Current State
+
+- Active branch: `step-04-request-backend`
+- Step 4 backend work is implemented.
+- In server mode, `server.mjs` owns bus movement, request lifecycle, and driver-light state.
+- In local file mode, the frontend simulation still works as a fallback.
+- Next unfinished step: Step 5, create ESP32 hardware prototype.
+
+## Key Decisions
+
+- First target: Modi'in-Maccabim-Reut.
+- Transit stakeholders: local municipality, Israel Ministry of Transport, and Kavim where needed.
+- First route: Kavim line 117, direction Modi'in-Maccabim-Reut to Jerusalem.
+- Demo segment: Central Station -> City Hall -> Dam HaMaccabim/Hashmonaim Boulevard -> Modi'in East Junction -> Maccabim Reut Junction.
+- Rider story: pickup request at City Hall and drop-off request at Maccabim Reut Junction.
+- First product format: web app demo.
+- First hardware format: ESP32 prototype with two request lights, GPS, and Wi-Fi/hotspot connectivity.
+- Public static GTFS data is preferred first; GTFS Realtime, Moovit, or Google APIs can be evaluated later if practical.
+
+## Completed Steps
+
+### Step 1: Define The Pilot Story
 
 Status: Completed on 2026-08-04
 
-Decisions:
+Outcome:
 
-- First target: Modi'in-Maccabim-Reut, working through the local municipality, Israel Ministry of Transport, and Kavim where needed.
-- First product format: web app demo.
-- First hardware format: ESP32 prototype.
-- First demo route: Kavim line 117, direction Modi'in-Maccabim-Reut to Jerusalem.
-- First demo segment: Modi'in-Maccabim-Reut Central Station -> City Hall -> Dam HaMaccabim/Hashmonaim Boulevard -> Modi'in East Junction -> Maccabim Reut Junction.
-- First rider story: rider requests pickup at City Hall and drop-off at Maccabim Reut Junction.
-
-Work:
-
-- Choose one target city or transit agency. Done: Modi'in-Maccabim-Reut.
-- Choose one simple bus route. Done: Kavim line 117.
-- Choose source and destination stops for the demo. Done: pickup at City Hall, drop-off at Maccabim Reut Junction.
-- Define the main pilot promise. Done: a rider can request pickup before the bus reaches City Hall, then request or confirm drop-off before the bus reaches Maccabim Reut Junction; the driver sees the correct pickup or drop-off light before arrival.
-- Define success metrics. Done:
-  - request delivery time,
-  - driver visibility,
-  - rider clarity,
-  - missed-stop reduction,
-  - operator feedback.
-
-Pilot notes:
-
-- The municipality states that Modi'in-Maccabim-Reut public transport is operated with the Ministry of Transport and Kavim, and that the Ministry of Transport has authority over public transport.
-- The municipality says city and intercity bus lines depart from the central transport complex near Modi'in Center railway station.
-- Moovit lists Kavim line 117 as Modi'in-Maccabim-Reut to Jerusalem, with 10 stops, including Modi'in-Maccabim-Reut Central Station, City Hall, Dam HaMaccabim/Hashmonaim Boulevard, Modi'in East Junction, and Maccabim Reut Junction.
-- Moovit lists the total line 117 trip duration as approximately 39 minutes, which makes a short in-city segment practical for a focused demo.
+- Chose Modi'in-Maccabim-Reut as the first pilot location.
+- Chose Kavim line 117 and the short in-city demo segment.
+- Defined the pilot promise: the rider requests pickup before City Hall, then requests or confirms drop-off before Maccabim Reut Junction; the driver sees the correct light before arrival.
+- Defined success metrics: request delivery time, driver visibility, rider clarity, missed-stop reduction, and operator feedback.
 
 References:
 
 - Municipality public transport page: https://www.modiin.muni.il/modiinwebsite/ChannelArticle.aspx?PageID=1200_3038
 - Moovit Kavim line 117 page: https://moovitapp.com/index/en/public_transit-line-117-Israel-1-13-668447-0?d=2781000
 
-## Step 2: Build The Simulated Web Demo
+### Step 2: Build The Simulated Web Demo
 
 Status: Completed on 2026-08-04
 
 Branch:
 
-- Base branch: main
-- Step branch: step-02-simulated-web-demo
+- Base branch: `main`
+- Step branch: `step-02-simulated-web-demo`
 
-Work:
+Outcome:
 
-- Create a Moovit-like rider screen focused on map, route, stops, bus movement, and request controls. Done.
-- Use simulated data for:
-  - route shape,
-  - stop list,
-  - bus position,
-  - ETA,
-  - pickup request state,
-  - drop-off request state.
-- Add a driver-device simulation panel with two lights. Done:
-  - pickup request,
-  - drop-off request.
-- Show clear state changes. Done:
-  - no request,
-  - request pending,
-  - driver received,
-  - bus arriving,
-  - request completed,
-  - bus passed.
-
-Implementation notes:
-
-- Added a static web demo that opens directly from `index.html`.
-- Added a simulated line 117 route segment from Central Station to Maccabim Reut Junction.
-- Added a moving bus marker, route progress, ETA, next-stop state, stop timeline, pickup request, drop-off request, reset control, and driver-device light simulation.
-- Corrected driver-device behavior so pickup and drop-off lights turn on only when the bus's next stop is the requested stop; earlier received requests stay queued without lighting the driver signal.
-- The demo uses local simulated data only and does not require internet, API keys, package installation, or a backend.
+- Added a static Moovit-like rider demo that opens from `index.html`.
+- Added route/stops, moving bus marker, ETA, next-stop state, stop timeline, request controls, reset control, and driver-device light simulation.
+- Added clear states for no request, pending, driver received, arriving, completed, and passed.
+- Corrected the driver-light behavior so the light turns on only when the next stop is the requested stop.
 
 Validation:
 
 - `node --check app.js` passed.
-- After correcting the driver-light logic, `node --check app.js` passed again.
-- `git status --short --branch` showed the active branch as `step-02-simulated-web-demo` with only the intended Step 2 files changed.
-- `git diff --stat` showed only the tracked `PLAN.md` update; the new app files are untracked until staged.
 
-## Step 3: Add Real Transit Data
+### Step 3: Add Real Transit Data
 
 Status: Completed on 2026-08-11
 
 Branch:
 
-- Base branch: main
-- Step branch: step-03-real-transit-data
+- Base branch: `main`
+- Step branch: `step-03-real-transit-data`
 
-Work:
+Outcome:
 
-- Start with public GTFS data for the selected city where available. Done: used Israel Ministry of Transport GTFS from https://gtfs.mot.gov.il/gtfsfiles/.
-- Parse GTFS stops, routes, trips, stop times, and shapes. Done: generated `data/line-117.js` from the extracted MOT feed.
-- Add GTFS Realtime if the agency provides vehicle positions or trip updates. Deferred to a later step; Step 3 stays static-data focused.
-- Evaluate Moovit or Google transit APIs if access, pricing, and licensing are practical. Deferred to later evaluation; Step 3 uses public static GTFS-backed data first.
-- Keep simulated fallback data so the demo still works without external API access. Done in code.
-
-Implementation notes:
-
-- Added `data/line-117.js` as the browser-loaded route data source for Kavim line 117 from Modi'in-Maccabim-Reut to Jerusalem.
-- Added `scripts/import-gtfs.mjs`, a no-dependency Node.js importer that can read extracted GTFS files and regenerate `data/line-117.js`.
-- Added `package.json` commands for syntax checks and GTFS import.
-- Updated `index.html` to load route data before `app.js`.
-- Updated `app.js` so route metadata, stops, map path, request targets, and ETA duration come from route data when available, with the previous simulated data kept as fallback.
-- Added `.gitignore` entries for raw/generated GTFS data and dependencies.
-- Selected the correct duplicate route number by preferring route names, headsigns, origins, and destinations that match Modi'in and Jerusalem.
-- Generated route data contains 10 stops, agency Kavim, duration 39 minutes, pickup target City Hall, and drop-off target Maccabim Reut Junction.
-- Fixed stop/map synchronization by calculating each stop's simulation progress from its nearest position along the GTFS route shape instead of evenly spacing stops by sequence.
-- Slowed demo pacing before the requested drop-off stop by mapping the first half of simulation time to the route segment ending at that stop.
-- The current background is still a stylized SVG map placeholder; a real street map layer is intentionally deferred to a future frontend/map step.
+- Used Israel Ministry of Transport static GTFS data from https://gtfs.mot.gov.il/gtfsfiles/.
+- Added `scripts/import-gtfs.mjs` to generate `data/line-117.js`.
+- Updated the app to load GTFS-backed route metadata, stops, shape, request targets, and duration, with simulated fallback data still available.
+- Generated route data for Kavim line 117 with 10 stops, 39-minute duration, pickup target City Hall, and drop-off target Maccabim Reut Junction.
+- Aligned stop progress to the route shape instead of evenly spacing stops.
+- Kept the stylized SVG map placeholder; a real street map layer is deferred.
 
 Validation:
 
-- `npm run check` passed; npm also printed a non-fatal cache-log permission warning.
+- `npm run check` passed.
 - `node --check data/line-117.js` passed.
-- A route-data shape check passed: route 117, agency Kavim, 10 stops, pickup target City Hall, and drop-off target Maccabim Reut Junction.
-- The importer was tested against a temporary GTFS fixture and wrote a valid route file.
-- The importer was run against the downloaded/extracted Israel Ministry of Transport GTFS feed and generated `data/line-117.js`.
-- A shape-aligned progress check passed: all stop progress values increase monotonically along the route shape.
-- A pacing check passed: simulation start maps to progress 0, the midpoint maps to the requested drop-off stop, and the end maps to route progress 1.
-- Current project state: Step 3 app remains static and works without a backend; realtime data is still not connected.
-- Next unfinished step: Step 4, add request management backend.
+- GTFS importer fixture and real-feed generation checks passed.
+- Route-shape monotonicity and demo pacing checks passed.
 
-## Step 4: Add Request Management Backend
+### Step 4: Add Request Management Backend
+
+Status: Completed on 2026-08-13
+
+Branch:
+
+- Base branch: `main`
+- Step branch: `step-04-request-backend`
+
+Outcome:
+
+- Added `server.mjs`, a no-dependency Node.js HTTP server.
+- Added backend-owned bus progress, current position, previous/next stops, ETA/status text, request lifecycle, and driver-light state.
+- Added API endpoints:
+  - `GET /api/state`
+  - `GET /api/events`
+  - `POST /api/requests`
+  - `POST /api/reset`
+- Updated `app.js` so server mode renders backend snapshots and sends request/reset actions to the backend.
+- Preserved direct `index.html` local simulation fallback.
+- Updated `package.json` with `npm start` and backend syntax checking.
+
+Validation:
+
+- `npm run check` passed.
+- Backend API check passed for startup, state fetch, request creation, delayed pickup acknowledgement, and reset.
+- Reset movement check passed: progress returns to 0 and then increases again after reset.
+
+## Remaining Steps
+
+### Step 5: Create ESP32 Hardware Prototype
 
 Status: Not started
 
-Work:
+Goal:
 
-- Add backend state for pickup and drop-off requests.
-- Match each request to:
-  - route,
-  - stop,
-  - bus,
-  - direction,
-  - request type.
-- Broadcast updates to the rider UI and driver device simulation.
-- Track request lifecycle:
-  - created,
-  - acknowledged,
-  - active,
-  - completed,
-  - expired.
-
-## Step 5: Create ESP32 Hardware Prototype
-
-Status: Not started
+- Build a desk prototype that receives backend request state and lights separate pickup/drop-off indicators.
 
 Work:
 
-- Build a prototype using:
-  - ESP32 board,
-  - two LEDs or light modules,
-  - GPS module,
-  - Wi-Fi or hotspot connectivity,
-  - basic enclosure.
+- Use an ESP32 board, two LEDs or light modules, GPS module, Wi-Fi or hotspot connectivity, and a basic enclosure.
 - Connect the device to the backend.
 - Light the pickup or drop-off indicator based on incoming requests.
-- Send basic device status back to the backend:
-  - online/offline,
-  - GPS position,
-  - request acknowledged.
+- Send online/offline status, GPS position, and acknowledgement back to the backend.
 
-## Step 6: Run Controlled Field Tests
+Completion criteria:
+
+- Device can connect to the backend.
+- Pickup and drop-off lights respond to the correct simulated request state.
+- Device status is visible or logged by the backend.
+
+### Step 6: Run Controlled Field Tests
 
 Status: Not started
 
+Goal:
+
+- Validate the workflow outside the browser-only demo.
+
 Work:
 
-- Test the full workflow with simulated bus movement.
+- Test simulated bus movement end to end.
 - Test the ESP32 device on a desk with backend events.
 - Test movement using a car or walking route near selected stops.
 - If permission is available, test in a depot or real bus environment.
-- Record:
-  - request latency,
-  - missed requests,
-  - false positives,
-  - driver understanding,
-  - rider confusion points.
+- Record request latency, missed requests, false positives, driver understanding, and rider confusion points.
 
-## Step 7: Prepare The City And Moovit Pitch
+### Step 7: Prepare The City And Moovit Pitch
 
 Status: Not started
 
+Goal:
+
+- Package the demo, hardware prototype, and validation evidence into a short pilot pitch.
+
 Work:
 
-- Create a short pitch deck.
-- Create a live demo script.
-- Lead with city/operator value:
-  - accessibility,
-  - fewer missed pickups,
-  - better low-frequency route service,
-  - safer late-night rider experience,
-  - low-cost pilot hardware.
+- Create a short pitch deck and live demo script.
+- Lead with city/operator value: accessibility, fewer missed pickups, better low-frequency route service, safer late-night rider experience, and low-cost pilot hardware.
 - Ask a local city or transit agency for a limited pilot.
-- Approach Moovit after the demo, hardware prototype, and local validation exist.
+- Approach Moovit after local validation exists.
 
 ## Planned Interfaces
 
-Simulated route data:
+Route data:
 
 - Stop: id, name, latitude, longitude, sequence.
 - Route: id, name, color, shape, stops.
@@ -226,27 +191,24 @@ Simulated route data:
 
 Backend API:
 
-- `POST /requests`: create pickup or drop-off request.
-- `GET /routes/:id`: return route and stops.
-- `GET /bus/:id/state`: return simulated or live bus state.
-- WebSocket or MQTT channel: broadcast request and bus updates.
+- Current implemented API: `/api/state`, `/api/events`, `/api/requests`, `/api/reset`.
+- Future API may add route-specific, bus-specific, WebSocket, or MQTT interfaces for real hardware/live updates.
 
 Hardware protocol:
 
-- Device subscribes to assigned bus id.
+- Device subscribes to an assigned bus id.
 - Backend sends pickup and drop-off request events.
 - Device reports online status, GPS position, and acknowledgement.
 
-## Test Plan
+## Overall Test Plan
 
-- Simulated demo works without internet or API keys.
-- User can select source and destination stops.
-- Bus moves along route and updates next stop.
-- Pickup request lights the pickup indicator.
-- Drop-off request lights the drop-off indicator.
-- Requests complete when the bus arrives.
-- Requests expire when the bus passes the stop.
-- Real GTFS import maps stops and route shape correctly.
+- Demo works without internet or API keys.
+- User can choose source and destination stops.
+- Bus moves along the route and updates the next stop.
+- Pickup request lights the pickup indicator at the right time.
+- Drop-off request lights the drop-off indicator at the right time.
+- Requests complete when the bus arrives and expire when the bus passes the stop.
+- GTFS import maps stops and route shape correctly.
 - ESP32 receives backend request events within acceptable latency.
 - Pilot script can be run start-to-finish in under five minutes.
 
@@ -256,5 +218,4 @@ Hardware protocol:
 - First deliverable is a shareable web app, not a native mobile app.
 - First physical device is an ESP32 prototype, not production hardware.
 - Simulated data is acceptable for version 1.
-- GTFS and GTFS Realtime are preferred before paid or restricted APIs.
 - Moovit should be approached after there is a convincing working demo and early local validation.
