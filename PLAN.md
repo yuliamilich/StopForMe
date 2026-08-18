@@ -2,38 +2,54 @@
 
 ## Working Rule
 
-Keep this file as the short durable project plan. After each completed project step, update status, validation, current state, and the next unfinished step.
+Keep this file as the durable project plan. During planning, update this file only. During implementation, complete one approved step at a time, validate it, then update this file before moving on.
 
 ## Project Summary
 
-StopForMe is a Moovit-like demo showing how a rider can request that a bus stop at a selected pickup stop and destination stop. The demo should show rider request state, realistic route/stops, simulated bus movement, and a driver-facing hardware signal.
+StopForMe is a Moovit-like demo showing how a rider can request that a bus stop at their pickup station. The demo should make the concept believable before any real hardware exists by showing three things together:
 
-Default path:
+- Phone screen: what the rider sees.
+- Bus hardware simulation: what a device on the bus would show.
+- Simulation controls: demo-only controls that simulate rider location and bus/request events.
 
-- Build the simulated web demo first.
-- Add real transit data before paid or restricted APIs.
-- Move request/bus state into a backend.
-- Prototype the driver device with ESP32 hardware.
-- Use the working demo and prototype to pitch a local city or transit agency before approaching Moovit.
+The current product direction is:
+
+- Web demo first.
+- Real phone app later.
+- Physical hardware last, as a bonus step after the app behavior is already proven.
+
+The product target is broader than the first seeded demo route: the app should eventually support all available bus lines in all supported cities from imported transit data. Kavim line 117 in Modi'in is the first test route, not a hardcoded product limit.
 
 ## Current State
 
-- Active branch: `step-04-request-backend`
-- Step 4 backend work is implemented.
-- In server mode, `server.mjs` owns bus movement, request lifecycle, and driver-light state.
-- In local file mode, the frontend simulation still works as a fallback.
-- Next unfinished step: Step 5, create ESP32 hardware prototype.
+- Active branch: `main`
+- Completed foundation:
+  - static Moovit-like web demo,
+  - GTFS-backed Kavim line 117 route data,
+  - Node backend with server-owned bus/request state,
+  - frontend fallback when opening `index.html` directly.
+- Next unfinished step: redesign the web demo around the new pickup-focused flow and three-panel simulation layout, then make the bus/stop flow data-driven instead of route-117-specific.
 
-## Key Decisions
+## Key Product Decisions
 
-- First target: Modi'in-Maccabim-Reut.
-- Transit stakeholders: local municipality, Israel Ministry of Transport, and Kavim where needed.
-- First route: Kavim line 117, direction Modi'in-Maccabim-Reut to Jerusalem.
-- Demo segment: Central Station -> City Hall -> Dam HaMaccabim/Hashmonaim Boulevard -> Modi'in East Junction -> Maccabim Reut Junction.
-- Rider story: pickup request at City Hall and drop-off request at Maccabim Reut Junction.
-- First product format: web app demo.
-- First hardware format: ESP32 prototype with two request lights, GPS, and Wi-Fi/hotspot connectivity.
-- Public static GTFS data is preferred first; GTFS Realtime, Moovit, or Google APIs can be evaluated later if practical.
+- Product target: all supported cities and bus lines from available transit feeds.
+- First seeded route for development: Kavim line 117, direction Modi'in-Maccabim-Reut to Jerusalem.
+- First seeded demo segment: Central Station -> City Hall -> Dam HaMaccabim/Hashmonaim Boulevard -> Modi'in East Junction -> Maccabim Reut Junction.
+- Early pilot target can still be Modi'in-Maccabim-Reut, with the local municipality, Israel Ministry of Transport, and Kavim involved where needed.
+- First detailed demo path: `Pick Bus`, not `Plan Trip`.
+- `Plan Trip` stays visible as a first-screen option but is deferred.
+- `Pick Bus` must be implemented as a general bus-line search flow. Line 117 can be the first indexed route, but the UI and state model should not assume only one city, agency, route, or direction.
+- The hardware no longer receives a rider's in-bus drop-off request.
+- The in-bus destination behavior becomes rider guidance only: if a destination was selected, the phone tells the rider how many stations remain and then says: "Get off at next station, press the stop button."
+- The hardware request light means only one thing: pickup request for the next station.
+- Hardware status has a separate online/offline light.
+
+## Planning Notes
+
+- Build reusable data and flow boundaries before polishing individual screens. Bus search, selected route, source stop, destination stop, simulated user state, bus progress, and request state should be explicit shared concepts.
+- Do not split every component into its own step. The map, bus marker, route line, stops, and progress indicator belong together in one route-view step because they form one user screen and should be validated together.
+- Do separate the route/catalog data model from the route-view UI. If route 117 remains hardcoded inside the UI, later support for all cities and lines will be expensive.
+- Real bus location should be treated as a later data-source upgrade. For the web demo, show a realistic simulated bus moving on real route data; keep the state shape compatible with live vehicle positions later.
 
 ## Completed Steps
 
@@ -45,8 +61,7 @@ Outcome:
 
 - Chose Modi'in-Maccabim-Reut as the first pilot location.
 - Chose Kavim line 117 and the short in-city demo segment.
-- Defined the pilot promise: the rider requests pickup before City Hall, then requests or confirms drop-off before Maccabim Reut Junction; the driver sees the correct light before arrival.
-- Defined success metrics: request delivery time, driver visibility, rider clarity, missed-stop reduction, and operator feedback.
+- Defined the original pilot promise and success metrics.
 
 References:
 
@@ -57,17 +72,11 @@ References:
 
 Status: Completed on 2026-08-04
 
-Branch:
-
-- Base branch: `main`
-- Step branch: `step-02-simulated-web-demo`
-
 Outcome:
 
 - Added a static Moovit-like rider demo that opens from `index.html`.
 - Added route/stops, moving bus marker, ETA, next-stop state, stop timeline, request controls, reset control, and driver-device light simulation.
 - Added clear states for no request, pending, driver received, arriving, completed, and passed.
-- Corrected the driver-light behavior so the light turns on only when the next stop is the requested stop.
 
 Validation:
 
@@ -77,145 +86,303 @@ Validation:
 
 Status: Completed on 2026-08-11
 
-Branch:
-
-- Base branch: `main`
-- Step branch: `step-03-real-transit-data`
-
 Outcome:
 
-- Used Israel Ministry of Transport static GTFS data from https://gtfs.mot.gov.il/gtfsfiles/.
+- Used Israel Ministry of Transport static GTFS data.
 - Added `scripts/import-gtfs.mjs` to generate `data/line-117.js`.
 - Updated the app to load GTFS-backed route metadata, stops, shape, request targets, and duration, with simulated fallback data still available.
-- Generated route data for Kavim line 117 with 10 stops, 39-minute duration, pickup target City Hall, and drop-off target Maccabim Reut Junction.
-- Aligned stop progress to the route shape instead of evenly spacing stops.
-- Kept the stylized SVG map placeholder; a real street map layer is deferred.
+- Generated route data for Kavim line 117 with 10 stops and 39-minute duration.
 
 Validation:
 
 - `npm run check` passed.
 - `node --check data/line-117.js` passed.
-- GTFS importer fixture and real-feed generation checks passed.
-- Route-shape monotonicity and demo pacing checks passed.
+- GTFS importer, route-shape monotonicity, and demo pacing checks passed.
 
 ### Step 4: Add Request Management Backend
 
 Status: Completed on 2026-08-13
 
-Branch:
-
-- Base branch: `main`
-- Step branch: `step-04-request-backend`
-
 Outcome:
 
 - Added `server.mjs`, a no-dependency Node.js HTTP server.
 - Added backend-owned bus progress, current position, previous/next stops, ETA/status text, request lifecycle, and driver-light state.
-- Added API endpoints:
-  - `GET /api/state`
-  - `GET /api/events`
-  - `POST /api/requests`
-  - `POST /api/reset`
+- Added API endpoints: `/api/state`, `/api/events`, `/api/requests`, and `/api/reset`.
 - Updated `app.js` so server mode renders backend snapshots and sends request/reset actions to the backend.
 - Preserved direct `index.html` local simulation fallback.
-- Updated `package.json` with `npm start` and backend syntax checking.
 
 Validation:
 
 - `npm run check` passed.
-- Backend API check passed for startup, state fetch, request creation, delayed pickup acknowledgement, and reset.
-- Reset movement check passed: progress returns to 0 and then increases again after reset.
+- Backend API and reset movement checks passed.
 
-## Remaining Steps
+## Web Demo Implementation Plan
 
-### Step 5: Create ESP32 Hardware Prototype
+### Step 5: Redesign The Demo Shell
 
 Status: Not started
 
 Goal:
 
-- Build a desk prototype that receives backend request state and lights separate pickup/drop-off indicators.
+- Reframe the web demo around the new sketch: phone screen, bus hardware simulation, and simulation controls visible together.
 
 Work:
 
-- Use an ESP32 board, two LEDs or light modules, GPS module, Wi-Fi or hotspot connectivity, and a basic enclosure.
-- Connect the device to the backend.
-- Light the pickup or drop-off indicator based on incoming requests.
-- Send online/offline status, GPS position, and acknowledgement back to the backend.
+- Replace the current rider-focused layout with a three-area demo layout:
+  - phone screen,
+  - bus hardware simulation,
+  - simulation control panel.
+- Add the first phone screen with two options:
+  - `Plan Trip`,
+  - `Pick Bus`.
+- Keep `Plan Trip` visible but disabled or marked as later.
+- Make `Pick Bus` the active path for the next steps.
+- Update the hardware simulation:
+  - bus number shown above the hardware only when relevant,
+  - request light: blue means pickup request for the next station, off means no request,
+  - status light: green means online, red means offline.
+- Remove UI/state language that implies a hardware drop-off request.
 
 Completion criteria:
 
-- Device can connect to the backend.
-- Pickup and drop-off lights respond to the correct simulated request state.
-- Device status is visible or logged by the backend.
+- The web demo clearly looks like a phone app plus separate bus hardware plus separate simulation controls.
+- The hardware panel has only request and status lights.
+- No user-facing flow suggests that the bus hardware receives a drop-off request.
 
-### Step 6: Run Controlled Field Tests
-
-Status: Not started
-
-Goal:
-
-- Validate the workflow outside the browser-only demo.
-
-Work:
-
-- Test simulated bus movement end to end.
-- Test the ESP32 device on a desk with backend events.
-- Test movement using a car or walking route near selected stops.
-- If permission is available, test in a depot or real bus environment.
-- Record request latency, missed requests, false positives, driver understanding, and rider confusion points.
-
-### Step 7: Prepare The City And Moovit Pitch
+### Step 6: Build Data-Driven Bus Catalog And Pick Bus Setup
 
 Status: Not started
 
 Goal:
 
-- Package the demo, hardware prototype, and validation evidence into a short pilot pitch.
+- Let the user search available bus lines and configure the source station before starting the live route view, without hardcoding the UI to line 117.
 
 Work:
 
+- Define or import a route catalog that can contain multiple cities, agencies, lines, directions, route shapes, and stop lists.
+- Seed the catalog with line 117 first, but keep the data shape ready for more routes/cities.
+- Add bus-number search over the route catalog.
+- Show matching bus options with enough context to distinguish city, agency, route, and direction.
+- After a bus is picked, ask the user to select a source station from that route's stop list.
+- Let the user optionally select a destination station.
+- Require the user to press `Start` before the request flow begins.
+- If the source station is picked, keep the request waiting until the simulated user arrives at the station.
+
+Completion criteria:
+
+- The user can search the route catalog and pick bus 117 as the first seeded route.
+- The user can choose a source station and optional destination.
+- The route view starts only after pressing `Start`.
+- No pickup request is sent during setup.
+- Adding another route should require adding/importing data, not rewriting the phone-flow UI.
+
+### Step 7: Build Live Route View
+
+Status: Not started
+
+Goal:
+
+- Show the selected route as a real transit experience: map, route shape, stops, bus marker, and bus progress.
+
+Work:
+
+- Show the route map for the selected bus/direction.
+- Draw the selected route shape and stops.
+- Show a simulated live bus marker moving along the selected route.
+- Show route progress, next stop, and ETA using backend state.
+- Show the phone message: "Request will be sent when close to the station."
+- Keep the hardware request light off until the request rules in the next step activate it.
+
+Completion criteria:
+
+- After pressing `Start`, the phone shows the selected route, stops, bus marker, and progress.
+- The map/route view reads from the selected route data, not route-117-specific UI logic.
+- The backend state and phone route view stay synchronized.
+
+### Step 8: Build Pickup Request Simulation
+
+Status: Not started
+
+Goal:
+
+- Simulate the real pickup behavior: the request is sent only after the user is close to the selected station, and the bus hardware lights only when that station is the bus's next station.
+
+Work:
+
+- Add simulation control: `Arrived at station`.
+- When `Arrived at station` is pressed:
+  - send the pickup request,
+  - update the phone message to show that the request was sent,
+  - keep the hardware request light off until the requested station is the bus's next station.
+- When the requested station becomes the next station:
+  - turn the hardware request light blue,
+  - show the relevant bus number above the hardware.
+- Complete the request when the bus reaches the station.
+
+Completion criteria:
+
+- Request timing matches the intended product behavior.
+- The hardware light does not turn on early.
+- The phone message and hardware state agree with the backend state.
+
+### Step 9: Add User Location And Ride Guidance States
+
+Status: Not started
+
+Goal:
+
+- Let the demo simulate common user movement states without using real phone GPS.
+
+Work:
+
+- Add simulation controls:
+  - `Left the station`,
+  - `Started ride`.
+- `Left the station` cancels the active pickup request and updates the phone message.
+- `Started ride` means the user's simulated location now approximately matches the bus location.
+- After `Started ride`, if a destination station exists:
+  - show `N stations away`,
+  - then show "Get off at next station, press the stop button" when the destination is next.
+- Do not send a hardware request for destination/drop-off.
+
+Completion criteria:
+
+- Leaving the station cancels or expires the pickup request cleanly.
+- Starting the ride changes the phone into in-bus guidance mode.
+- Destination guidance works without using the hardware request light.
+
+### Step 10: Polish The Web Demo For Pitch Use
+
+Status: Not started
+
+Goal:
+
+- Make the web demo feel polished enough to show to a city/operator or Moovit contact.
+
+Work:
+
+- Tighten the Moovit-like visual style without copying protected branding exactly.
+- Improve mobile-screen realism and spacing.
+- Add clear empty, loading, offline, active, cancelled, completed, and passed states.
+- Add a demo reset flow that returns phone, hardware, simulation controls, and backend state to a known starting point.
+- Add focused tests for the request state machine.
+- Run browser checks at desktop and mobile widths.
+
+Completion criteria:
+
+- A five-minute demo script can be run start-to-finish without confusing state.
+- The app works through `npm start`.
+- The direct-file fallback either still works or is intentionally removed with a recorded reason.
+
+## Later Product Plan
+
+### Step 11: Add Plan Trip Flow
+
+Status: Later
+
+Goal:
+
+- Let normal riders start from origin/destination instead of already knowing the bus number.
+
+Notes:
+
+- This likely needs route search, stop search, departure time, candidate route ranking, and clearer handling of multiple nearby buses.
+- It should come after `Pick Bus` is polished because it expands the route-planning problem.
+
+### Step 12: Create Phone App Or PWA
+
+Status: Later
+
+Goal:
+
+- Turn the proven web demo behavior into a phone-ready product surface.
+
+Notes:
+
+- Start by making the web demo responsive and PWA-capable.
+- Consider React Native with Expo only if native app behavior becomes necessary.
+
+### Step 13: Add Physical Hardware Prototype
+
+Status: Bonus / last
+
+Goal:
+
+- Build real bus-side hardware after the app/backend behavior is already proven.
+
+Notes:
+
+- Hardware should subscribe to the same backend state already proven in the web demo.
+- First prototype can use ESP32, Wi-Fi/hotspot, optional GPS, and two indicators:
+  - blue request light,
+  - green/red online status light.
+- MQTT may become useful here, but it should not drive the earlier web-demo architecture.
+
+### Step 14: Run Controlled Field Tests And Pitch
+
+Status: Later
+
+Goal:
+
+- Validate the full workflow and package evidence for city/operator discussions.
+
+Notes:
+
+- Test request latency, missed requests, false positives, user confusion, and driver understanding.
 - Create a short pitch deck and live demo script.
-- Lead with city/operator value: accessibility, fewer missed pickups, better low-frequency route service, safer late-night rider experience, and low-cost pilot hardware.
-- Ask a local city or transit agency for a limited pilot.
-- Approach Moovit after local validation exists.
+- Approach a local city or transit agency before approaching Moovit.
 
 ## Planned Interfaces
 
 Route data:
 
-- Stop: id, name, latitude, longitude, sequence.
-- Route: id, name, color, shape, stops.
+- City/area: id, name, country, supported agencies.
+- Agency: id, name, city/area, source feed.
+- Line: id, public number, agency, city/area, available directions.
+- Direction: id, headsign, route shape, ordered stops, estimated duration.
+- Stop: id, name, latitude, longitude, sequence, served lines.
 - Bus state: route id, current position, next stop, speed, progress.
 - Request state: type, stop id, bus id, status, created time, acknowledged time.
 
 Backend API:
 
 - Current implemented API: `/api/state`, `/api/events`, `/api/requests`, `/api/reset`.
-- Future API may add route-specific, bus-specific, WebSocket, or MQTT interfaces for real hardware/live updates.
+- Future API should add catalog/route lookup endpoints before broader city/line support:
+  - list supported cities/areas,
+  - search lines by number/city/agency,
+  - return line directions,
+  - return stops and route shape for a selected direction.
+- Future API may add bus-specific, WebSocket, or MQTT interfaces for real hardware/live updates.
 
 Hardware protocol:
 
 - Device subscribes to an assigned bus id.
-- Backend sends pickup and drop-off request events.
-- Device reports online status, GPS position, and acknowledgement.
+- Backend sends pickup request events for the next station.
+- Device reports online status, GPS position if available, and acknowledgement.
 
 ## Overall Test Plan
 
-- Demo works without internet or API keys.
-- User can choose source and destination stops.
-- Bus moves along the route and updates the next stop.
-- Pickup request lights the pickup indicator at the right time.
-- Drop-off request lights the drop-off indicator at the right time.
+- Demo works without internet or API keys where possible.
+- User can choose `Pick Bus` from the first screen.
+- User can search the route catalog and pick a seeded bus line.
+- The first seeded route can be line 117, but the flow should be ready for additional cities, agencies, lines, and directions.
+- User can choose source station and optional destination station.
+- The route view shows the selected route shape, stops, simulated bus location, and progress.
+- Pickup request is not sent until the user is simulated as close to the source station.
+- Hardware request light turns blue only when the requested station is the bus's next station.
+- Hardware status light shows online/offline state separately from request state.
+- Leaving the station cancels the request and updates the phone message.
+- Starting the ride changes the phone to destination guidance if a destination was selected.
+- Destination guidance never sends a hardware stop request.
 - Requests complete when the bus arrives and expire when the bus passes the stop.
-- GTFS import maps stops and route shape correctly.
-- ESP32 receives backend request events within acceptable latency.
 - Pilot script can be run start-to-finish in under five minutes.
 
 ## Assumptions
 
 - First serious target is a local city or transit agency, not Moovit directly.
-- First deliverable is a shareable web app, not a native mobile app.
-- First physical device is an ESP32 prototype, not production hardware.
-- Simulated data is acceptable for version 1.
+- First deliverable is a shareable web demo, not a native mobile app.
+- First physical device is optional and comes after the app works convincingly.
+- Simulated user location is acceptable for the web demo.
+- Static GTFS data is enough for the first web demo; realtime vehicle data can come later.
+- "All cities and lines" means all cities/lines available in supported imported feeds, not every transit system in the world on day one.
 - Moovit should be approached after there is a convincing working demo and early local validation.
