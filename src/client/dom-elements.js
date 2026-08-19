@@ -1,0 +1,27 @@
+export function getDomElements() {
+  return {
+    routeTitle: document.querySelector("#routeTitle"),
+    serviceMode: document.querySelector("#serviceMode"),
+    pickupStop: document.querySelector("#pickupStop"),
+    dropoffStop: document.querySelector("#dropoffStop"),
+    busMarker: document.querySelector("#busMarker"),
+    routePath: document.querySelector("#routePath"),
+    routeProgress: document.querySelector("#routeProgress"),
+    stopLayer: document.querySelector("#stopLayer"),
+    stopTimeline: document.querySelector("#stopTimeline"),
+    nextStop: document.querySelector("#nextStop"),
+    eta: document.querySelector("#eta"),
+    busState: document.querySelector("#busState"),
+    pickupButton: document.querySelector("#pickupButton"),
+    resetButton: document.querySelector("#resetButton"),
+    requestLight: document.querySelector("#requestLight"),
+    requestLightStatus: document.querySelector("#requestLightStatus"),
+    statusLight: document.querySelector("#statusLight"),
+    statusLightStatus: document.querySelector("#statusLightStatus"),
+    deviceRequestLabel: document.querySelector("#deviceRequestLabel"),
+    deviceConnection: document.querySelector("#deviceConnection"),
+    deviceMessage: document.querySelector("#deviceMessage"),
+    deviceBusNumber: document.querySelector("#deviceBusNumber"),
+    hardwareRouteBadge: document.querySelector("#hardwareRouteBadge"),
+  };
+}

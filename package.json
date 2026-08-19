@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "check": "node --check app.js && node --check server.mjs && node --check data/line-117.js && node --check scripts/import-gtfs.mjs",
+    "check": "node scripts/check-syntax.mjs",
     "import:gtfs": "node scripts/import-gtfs.mjs --input data/raw/gtfs --out data/line-117.js"
   }
 }

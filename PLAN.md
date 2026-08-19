@@ -22,13 +22,13 @@ The product target is broader than the first seeded demo route: the app should e
 
 ## Current State
 
-- Active branch: `main`
+- Active branch: `codex/step-05-demo-shell`
 - Completed foundation:
   - static Moovit-like web demo,
   - GTFS-backed Kavim line 117 route data,
   - Node backend with server-owned bus/request state,
-  - frontend fallback when opening `index.html` directly.
-- Next unfinished step: redesign the web demo around the new pickup-focused flow and three-panel simulation layout, then make the bus/stop flow data-driven instead of route-117-specific.
+  - modular frontend/backend code loaded through `npm start`.
+- Next unfinished step: build the data-driven bus catalog and Pick Bus setup flow.
 
 ## Key Product Decisions
 
@@ -120,7 +120,12 @@ Validation:
 
 ### Step 5: Redesign The Demo Shell
 
-Status: Not started
+Status: Completed on 2026-08-18
+
+Branch:
+
+- Base branch: `main`
+- Step branch: `codex/step-05-demo-shell`
 
 Goal:
 
@@ -148,6 +153,46 @@ Completion criteria:
 - The web demo clearly looks like a phone app plus separate bus hardware plus separate simulation controls.
 - The hardware panel has only request and status lights.
 - No user-facing flow suggests that the bus hardware receives a drop-off request.
+
+Outcome:
+
+- Replaced the old rider-app-plus-driver-panel layout with three visible areas:
+  - rider phone simulation,
+  - driver hardware simulation,
+  - demo simulation controls.
+- Added the first phone screen with `Plan Trip` visible as a deferred option and `Pick Bus` marked as the active path.
+- Moved the current pickup request action into the simulation controls.
+- Updated the driver hardware model to show only:
+  - a blue pickup request light,
+  - a green/red online status light,
+  - the bus number only when the pickup request light is active.
+- Removed user-facing drop-off request controls and driver-device drop-off light language.
+- Cleaned the backend driver-device snapshot so it exposes one pickup request light plus device online status instead of separate pickup/drop-off hardware lights.
+- Split the frontend code into focused modules:
+  - `src/client/api-client.js` for backend connection and Server-Sent Events,
+  - `src/client/local-simulation.js` for direct browser simulation fallback logic,
+  - `src/client/phone-view.js` for phone/map/timeline rendering,
+  - `src/client/hardware-view.js` for driver hardware rendering,
+  - `src/client/simulation-controls-view.js` for demo control rendering,
+  - `src/client/app-controller.js` for wiring state, views, events, and API calls.
+- Split shared and backend code into focused modules:
+  - `src/shared/request-labels.js` and `src/shared/route-helpers.js` for reused constants and route math,
+  - `src/server/route-data-loader.js` for GTFS-backed route loading,
+  - `src/server/simulation-state.js` for bus/request state,
+  - `src/server/driver-device-state.js` for hardware-facing state,
+  - `src/server/static-file-server.js` for static assets and JSON responses,
+  - `src/server/http-server.js` for HTTP routes, SSE clients, and the simulation timer.
+- Reduced root `app.js` and `server.mjs` to entry points.
+- Added `scripts/check-syntax.mjs` and updated `npm run check` so validation covers all project JavaScript modules.
+- Recorded implementation constraint: after the module split, the supported demo path is `npm start`; opening `index.html` directly is no longer treated as a supported runtime because browser ES modules need to be served with JavaScript MIME types.
+
+Validation:
+
+- `npm run check` passed on 2026-08-18.
+- `GET /` returned `200` from `npm start`.
+- `GET /app.js` and `GET /src/client/app-controller.js` returned `text/javascript`.
+- `GET /api/state` returned pickup-only driver-device state.
+- Reset plus pickup request smoke test turned `driverDevice.requestLightActive` on with `requestType: "pickup"`.
 
 ### Step 6: Build Data-Driven Bus Catalog And Pick Bus Setup
 
@@ -244,6 +289,7 @@ Work:
   - show `N stations away`,
   - then show "Get off at next station, press the stop button" when the destination is next.
 - Do not send a hardware request for destination/drop-off.
+- Retire or replace the remaining backend drop-off request lifecycle once destination guidance state exists, so drop-off is no longer represented as a backend hardware-style request.
 
 Completion criteria:
 

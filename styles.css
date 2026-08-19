@@ -1,6 +1,7 @@
 :root {
   color-scheme: light;
   --blue: #106dce;
+  --blue-dark: #0b4d97;
   --green: #0c9b62;
   --teal: #0c8f9b;
   --ink: #12202f;
@@ -8,6 +9,7 @@
   --line: #d7e0ea;
   --surface: #ffffff;
   --page: #edf3f8;
+  --panel: #f8fbfd;
   --warning: #f4a019;
   --danger: #d94f45;
   --shadow: 0 18px 48px rgba(28, 47, 68, 0.14);
@@ -31,44 +33,60 @@ button {
   font: inherit;
 }
 
-.app-shell {
+.demo-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 20px;
-  width: min(1180px, calc(100vw - 32px));
+  grid-template-columns: minmax(320px, 390px) minmax(280px, 330px) minmax(320px, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "header header header"
+    "phone hardware controls";
+  gap: 18px;
+  width: min(1280px, calc(100vw - 32px));
   min-height: calc(100vh - 32px);
   margin: 16px auto;
 }
 
-.rider-app,
-.driver-panel {
-  min-width: 0;
-}
-
-.rider-app {
-  display: grid;
-  grid-template-rows: auto auto minmax(360px, 1fr) auto auto;
-  gap: 14px;
-}
-
-.top-bar,
-.trip-card,
-.status-strip,
-.controls,
-.device,
-.timeline {
-  background: var(--surface);
-  border: 1px solid rgba(18, 32, 47, 0.08);
-  box-shadow: var(--shadow);
-}
-
-.top-bar {
+.demo-header {
+  grid-area: header;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
   padding: 18px 20px;
+  border: 1px solid rgba(18, 32, 47, 0.08);
   border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.phone-panel,
+.hardware-panel,
+.simulation-panel {
+  min-width: 0;
+}
+
+.phone-panel {
+  grid-area: phone;
+}
+
+.hardware-panel {
+  grid-area: hardware;
+  align-self: start;
+  display: grid;
+  gap: 12px;
+}
+
+.simulation-panel {
+  grid-area: controls;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+  padding: 16px;
+  border: 1px solid rgba(18, 32, 47, 0.08);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .eyebrow,
@@ -78,8 +96,8 @@ button {
   display: block;
   margin: 0 0 4px;
   color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 700;
+  font-size: 0.74rem;
+  font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -91,7 +109,7 @@ h2 {
 }
 
 h1 {
-  font-size: clamp(1.35rem, 2.5vw, 2.25rem);
+  font-size: clamp(1.45rem, 2.4vw, 2.35rem);
 }
 
 h2 {
@@ -99,7 +117,8 @@ h2 {
 }
 
 .service-badge,
-.device-pill {
+.device-pill,
+.phone-status {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -109,8 +128,8 @@ h2 {
   border-radius: 999px;
   color: #075b40;
   background: #dcf8ec;
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 0.86rem;
+  font-weight: 800;
 }
 
 .service-dot {
@@ -121,20 +140,115 @@ h2 {
   box-shadow: 0 0 0 5px rgba(12, 155, 98, 0.15);
 }
 
+.phone-frame {
+  position: sticky;
+  top: 16px;
+  display: grid;
+  gap: 12px;
+  min-height: min(820px, calc(100vh - 104px));
+  padding: 14px;
+  border: 1px solid rgba(18, 32, 47, 0.18);
+  border-radius: 30px;
+  background: #172233;
+  box-shadow: var(--shadow);
+}
+
+.phone-speaker {
+  justify-self: center;
+  width: 74px;
+  height: 6px;
+  border-radius: 999px;
+  background: #43546a;
+}
+
+.phone-screen {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(260px, 1fr) auto;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 14px;
+  border-radius: 20px;
+  background: #f4f8fb;
+}
+
+.phone-top,
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.phone-status {
+  min-height: 28px;
+  color: #0b4d97;
+  background: #dceeff;
+}
+
+.mode-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mode-card {
+  display: grid;
+  gap: 6px;
+  min-height: 76px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mode-card span,
+.mode-card strong {
+  display: block;
+}
+
+.mode-card span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.mode-card strong {
+  font-size: 1.08rem;
+}
+
+.mode-card.active {
+  border-color: rgba(16, 109, 206, 0.5);
+  background: #e8f3ff;
+  box-shadow: inset 0 0 0 1px rgba(16, 109, 206, 0.16);
+}
+
+.mode-card.disabled {
+  color: #8692a2;
+  background: #f0f4f8;
+  cursor: not-allowed;
+}
+
 .trip-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
   align-items: center;
-  gap: 14px;
-  padding: 16px;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(18, 32, 47, 0.08);
   border-radius: 8px;
+  background: #ffffff;
 }
 
 .field {
   min-width: 0;
-  padding: 12px 14px;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: #ffffff;
 }
 
 .field strong {
@@ -170,12 +284,11 @@ h2 {
 
 .map-panel {
   position: relative;
-  min-height: 380px;
+  min-height: 280px;
   overflow: hidden;
   border: 1px solid rgba(18, 32, 47, 0.08);
   border-radius: 8px;
   background: #dbe8f0;
-  box-shadow: var(--shadow);
 }
 
 .map-grid {
@@ -190,10 +303,10 @@ h2 {
 
 .route-map {
   position: relative;
+  display: block;
   width: 100%;
   height: 100%;
-  min-height: 380px;
-  display: block;
+  min-height: 280px;
 }
 
 .district {
@@ -251,7 +364,7 @@ h2 {
   stroke: var(--warning);
 }
 
-.stop-pin.target-dropoff circle {
+.stop-pin.target-destination circle {
   stroke: var(--teal);
 }
 
@@ -261,8 +374,8 @@ h2 {
   font-weight: 750;
   paint-order: stroke;
   stroke: rgba(255, 255, 255, 0.92);
-  stroke-width: 5px;
   stroke-linejoin: round;
+  stroke-width: 5px;
 }
 
 .bus-marker circle {
@@ -284,12 +397,14 @@ h2 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
   overflow: hidden;
+  border: 1px solid rgba(18, 32, 47, 0.08);
   border-radius: 8px;
+  background: var(--line);
 }
 
 .status-strip > div {
   min-width: 0;
-  padding: 14px 16px;
+  padding: 12px;
   background: #ffffff;
 }
 
@@ -298,61 +413,23 @@ h2 {
   overflow-wrap: anywhere;
 }
 
-.controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 10px;
-  padding: 12px;
+.hardware-route-badge {
+  justify-self: start;
+  padding: 8px 12px;
   border-radius: 8px;
-}
-
-.primary-action,
-.secondary-action,
-.icon-action {
-  min-height: 46px;
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 800;
-}
-
-.primary-action {
   color: #ffffff;
-  background: var(--blue);
-}
-
-.secondary-action {
-  color: #ffffff;
-  background: var(--teal);
-}
-
-.icon-action {
-  padding: 0 16px;
-  color: var(--ink);
-  background: #e7edf4;
-}
-
-.primary-action:disabled,
-.secondary-action:disabled {
-  cursor: not-allowed;
-  opacity: 0.52;
-}
-
-.driver-panel {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 14px;
-}
-
-.device,
-.timeline {
-  border-radius: 8px;
+  background: var(--blue-dark);
+  font-weight: 850;
+  box-shadow: var(--shadow);
 }
 
 .device {
   padding: 16px;
+  border: 1px solid rgba(18, 32, 47, 0.16);
+  border-radius: 8px;
   color: #f6fbff;
   background: #182434;
+  box-shadow: var(--shadow);
 }
 
 .device-header {
@@ -389,7 +466,7 @@ h2 {
 }
 
 .device-screen strong {
-  font-size: 2.4rem;
+  font-size: 2.15rem;
 }
 
 .lights {
@@ -416,14 +493,19 @@ h2 {
   box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.08);
 }
 
-.light.active.pickup {
-  background: var(--warning);
-  box-shadow: 0 0 26px rgba(244, 160, 25, 0.72);
+.light.active.request {
+  background: var(--blue);
+  box-shadow: 0 0 26px rgba(16, 109, 206, 0.72);
 }
 
-.light.active.dropoff {
-  background: var(--teal);
-  box-shadow: 0 0 26px rgba(12, 143, 155, 0.72);
+.light.active.status-online {
+  background: var(--green);
+  box-shadow: 0 0 22px rgba(12, 155, 98, 0.62);
+}
+
+.light.active.status-offline {
+  background: var(--danger);
+  box-shadow: 0 0 22px rgba(217, 79, 69, 0.62);
 }
 
 .light-row strong,
@@ -436,10 +518,51 @@ h2 {
   font-size: 0.9rem;
 }
 
+.panel-heading {
+  padding-bottom: 2px;
+}
+
+.simulation-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.primary-action,
+.secondary-action,
+.icon-action {
+  min-height: 46px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.primary-action {
+  color: #ffffff;
+  background: var(--blue);
+}
+
+.secondary-action {
+  color: var(--ink);
+  background: #e7edf4;
+}
+
+.icon-action {
+  padding: 0 16px;
+  color: var(--ink);
+  background: #e7edf4;
+}
+
+.primary-action:disabled,
+.secondary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
 .timeline {
   min-height: 0;
   overflow: auto;
-  padding: 16px;
+  padding-top: 4px;
 }
 
 .timeline ol {
@@ -458,7 +581,7 @@ h2 {
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fbfd;
+  background: var(--panel);
 }
 
 .timeline .index {
@@ -496,52 +619,57 @@ h2 {
 .request-chip {
   padding: 5px 8px;
   border-radius: 999px;
-  color: #3b4654;
-  background: #e7edf4;
+  color: #694100;
+  background: #fff0cf;
   font-size: 0.76rem;
   font-weight: 800;
 }
 
-.request-chip.pickup {
-  color: #694100;
-  background: #fff0cf;
-}
-
-.request-chip.dropoff {
-  color: #055e68;
-  background: #dff8fb;
-}
-
-@media (max-width: 920px) {
-  .app-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .driver-panel {
-    grid-template-columns: 1fr;
+@media (max-width: 1080px) {
+  .demo-shell {
+    grid-template-columns: minmax(320px, 420px) minmax(320px, 1fr);
+    grid-template-areas:
+      "header header"
+      "phone hardware"
+      "phone controls";
   }
 }
 
-@media (max-width: 640px) {
-  .app-shell {
-    width: min(100vw - 20px, 1180px);
+@media (max-width: 760px) {
+  .demo-shell {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "phone"
+      "hardware"
+      "controls";
+    width: min(100vw - 20px, 1280px);
     margin: 10px auto;
   }
 
-  .top-bar,
-  .trip-card,
-  .status-strip,
-  .controls {
-    grid-template-columns: 1fr;
+  .demo-header,
+  .phone-top,
+  .panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .top-bar {
-    align-items: flex-start;
+  .phone-frame {
+    position: static;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .trip-card,
+  .status-strip,
+  .mode-picker {
+    grid-template-columns: 1fr;
   }
 
   .connector {
     width: 2px;
-    height: 26px;
+    height: 24px;
     margin-left: 18px;
   }
 
@@ -559,18 +687,5 @@ h2 {
   .connector::after {
     top: auto;
     bottom: 0;
-  }
-
-  .map-panel,
-  .route-map {
-    min-height: 330px;
-  }
-
-  .controls {
-    gap: 8px;
-  }
-
-  .icon-action {
-    width: 100%;
   }
 }
